@@ -1,0 +1,772 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noite dos Caldos - Ingresso Editável Offline</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Dancing+Script:wght@400;600;700&display=swap');
+    
+    :root {
+        --primary: #FF6F00;
+        --primary-dark: #E65100;
+        --brown: #6D4C41;
+        --brown-light: #8D6E63;
+    }
+    
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+        min-height: 100vh;
+        padding: 1rem;
+    }
+    
+    @media (min-width: 768px) {
+        body {
+            padding: 2rem;
+        }
+    }
+    
+    .font-handwriting {
+        font-family: 'Dancing Script', cursive;
+    }
+    
+    [contenteditable="true"] {
+        outline: 2px dashed transparent;
+        transition: all 0.2s;
+        border-radius: 4px;
+        padding: 2px 4px;
+        min-height: 1em;
+        display: inline-block;
+        word-break: break-word;
+    }
+    
+    [contenteditable="true"]:hover {
+        outline: 2px dashed var(--primary);
+        background: rgba(255, 111, 0, 0.05);
+    }
+    
+    [contenteditable="true"]:focus {
+        outline: 2px solid var(--primary);
+        background: rgba(255, 111, 0, 0.1);
+    }
+    
+    .ticket-shadow {
+        box-shadow: 0 20px 60px -10px rgba(139, 69, 19, 0.3);
+    }
+    
+    .dashed-cut {
+        background-image: linear-gradient(to right, #8D6E63 50%, transparent 50%);
+        background-position: top;
+        background-size: 12px 2px;
+        background-repeat: repeat-x;
+        height: 2px;
+    }
+    
+    .steam {
+        animation: steam 3s ease-in-out infinite;
+    }
+    
+    @keyframes steam {
+        0%, 100% { opacity: 0.3; transform: translateY(0) scale(1); }
+        50% { opacity: 0.7; transform: translateY(-10px) scale(1.1); }
+    }
+    
+    .format-10x15 {
+        width: 10cm;
+        height: 15cm;
+    }
+    
+    .format-20x7 {
+        width: 20cm;
+        height: 7cm;
+    }
+    
+    .format-20x7 .ticket-content {
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+    }
+    
+    .format-20x7 .ticket-header {
+        width: 40%;
+        height: 100%;
+    }
+    
+    .format-20x7 .ticket-main-wrapper {
+        width: 60%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .container {
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+    
+    .control-panel {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    @media (min-width: 768px) {
+        .control-panel {
+            padding: 2rem;
+        }
+    }
+    
+    .header-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    @media (min-width: 768px) {
+        .header-panel {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+    }
+    
+    .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.25rem;
+        border: none;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+    }
+    
+    .btn-brown {
+        background: var(--brown);
+        color: white;
+    }
+    
+    .btn-brown:hover {
+        background: #5D4037;
+    }
+    
+    .btn-success {
+        background: #16a34a;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: #15803d;
+    }
+    
+    .btn-secondary {
+        background: var(--brown-light);
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: var(--brown);
+    }
+    
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: wait;
+        pointer-events: none;
+    }
+    
+    .alert {
+        background: linear-gradient(to right, #FFF3E0, #FFECB3);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        border: 2px solid rgba(255, 111, 0, 0.2);
+        color: var(--brown);
+        font-size: 0.875rem;
+        display: flex;
+        align-items: start;
+        gap: 0.5rem;
+    }
+    
+    .ticket-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        overflow: auto;
+        padding: 1rem;
+    }
+    
+    .ticket-container {
+        background: white;
+        border-radius: 1.5rem;
+        overflow: hidden;
+        transition: all 0.3s;
+        position: relative;
+    }
+    
+    .tips-panel {
+        max-width: 64rem;
+        margin: 2rem auto 0;
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+    }
+    
+    .tips-grid {
+        display: grid;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: var(--brown-light);
+    }
+    
+    @media (min-width: 768px) {
+        .tips-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+    
+    .toast {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 50;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    .hidden {
+        display: none !important;
+    }
+    
+    /* Icones CSS - sem dependência */
+    .icon {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        vertical-align: middle;
+    }
+    
+    .icon-bowl::before { content: '🍲'; }
+    .icon-heart::before { content: '❤️'; }
+    .icon-utensils::before { content: '🍴'; }
+    .icon-repeat::before { content: '🔄'; }
+    .icon-print::before { content: '🖨️'; }
+    .icon-image::before { content: '🖼️'; }
+    .icon-info::before { content: 'ℹ️'; }
+    .icon-user::before { content: '👤'; }
+    .icon-calendar::before { content: '📅'; }
+    .icon-clock::before { content: '🕐'; }
+    .icon-location::before { content: '📍'; }
+    .icon-scissors::before { content: '✂️'; }
+    .icon-recycle::before { content: '♻️'; }
+    .icon-lightbulb::before { content: '💡'; }
+    .icon-paper::before { content: '📄'; }
+    .icon-ruler::before { content: '📏'; }
+    .icon-check::before { content: '✅'; }
+    
+    @media print {
+        @page {
+            size: 10cm 15cm;
+            margin: 0;
+        }
+        
+        @page landscape {
+            size: 20cm 7cm;
+            margin: 0;
+        }
+        
+        body {
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .no-print {
+            display: none !important;
+        }
+        
+        .ticket-wrapper {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .ticket-container {
+            page-break-inside: avoid;
+            box-shadow: none !important;
+            margin: 0 auto;
+            border-radius: 0 !important;
+        }
+        
+        [contenteditable="true"] {
+            outline: none !important;
+            background: transparent !important;
+        }
+        
+        .format-20x7 {
+            page: landscape;
+        }
+    }
+</style>
+</head>
+<body>
+    <!-- Toast de notificação -->
+    <div id="toast" class="hidden toast no-print">
+        <div id="toastContent" style="background: #16a34a; color: white; padding: 0.75rem 1.5rem; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 0.75rem;">
+            <span class="icon icon-check"></span>
+            <span id="toastMessage">Ação realizada com sucesso!</span>
+        </div>
+    </div>
+
+    <!-- Header com controles -->
+    <div class="container no-print">
+        <div class="control-panel">
+            <div class="header-panel">
+                <div>
+                    <h1 style="font-size: 1.875rem; font-weight: 700; color: var(--brown); display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+                        <span class="icon icon-bowl" style="color: var(--primary); font-size: 1.5em;"></span>
+                        Gerador de Ingressos Offline
+                    </h1>
+                    <p style="color: var(--brown-light); font-size: 0.875rem;">Noite dos Caldos - Evento Beneficente</p>
+                </div>
+                <div class="btn-group">
+                    <button id="formatToggle" class="btn btn-primary">
+                        <span class="icon icon-repeat"></span>
+                        <span id="formatText">Formato 20x7cm</span>
+                    </button>
+                    <button id="downloadImage" class="btn btn-secondary">
+                        <span class="icon icon-image"></span>
+                        <span>Baixar Imagem</span>
+                    </button>
+                    <button id="printBtn" class="btn btn-success">
+                        <span class="icon icon-print"></span>
+                        <span>Imprimir / Salvar PDF</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="alert">
+                <span class="icon icon-info" style="color: var(--primary); margin-top: 2px;"></span>
+                <span><strong>Instruções:</strong> Clique em qualquer texto para editar. Para gerar PDF: clique em "Imprimir / Salvar PDF" → Destino: "Salvar como PDF" → Salvar. Funciona 100% offline, sem internet.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Área do Ingresso -->
+    <div class="container">
+        <div id="ticketWrapper" class="ticket-wrapper">
+            <div id="ticket" class="ticket-container format-10x15 ticket-shadow">
+                <div class="ticket-content">
+                    <!-- Decoração superior / Lateral -->
+                    <div class="ticket-header" style="background: linear-gradient(135deg, var(--primary) 0%, #FF8F00 50%, #FFA726 100%); padding: 1.5rem; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; right: 0; opacity: 0.1; font-size: 9rem;">🍲</div>
+                        <div style="position: absolute; bottom: 0; left: 0; opacity: 0.1; font-size: 4.5rem;">🍴</div>
+                        
+                        <div style="position: relative; z-index: 10; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;">
+                            <div style="flex: 1;">
+                                <div style="display: inline-block; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); padding: 0.25rem 1rem; border-radius: 9999px; margin-bottom: 0.75rem;">
+                                    <span style="color: white; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;">
+                                        <span class="icon icon-heart"></span>
+                                        <span contenteditable="true">EVENTO BENEFICENTE</span>
+                                    </span>
+                                </div>
+                                <h2 contenteditable="true" class="font-handwriting" style="color: white; font-size: 2.25rem; font-weight: 700; margin-bottom: 0.25rem; line-height: 1.1;">
+                                    Noite dos Caldos
+                                </h2>
+                                <p contenteditable="true" style="color: rgba(255,255,255,0.9); font-size: 0.875rem;">
+                                    Toda renda será revertida para Projeto Acolher
+                                </p>
+                            </div>
+                            
+                            <!-- Logo da instituição -->
+                            <div style="background: white; border-radius: 1rem; padding: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); width: 5rem; height: 5rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                                <label for="logoUpload" style="cursor: pointer; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;" class="no-print">
+                                    <div id="logoPreview" style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--brown-light); font-size: 0.75rem; text-align: center;">
+                                        <span style="font-size: 1.5rem; margin-bottom: 0.25rem;">🖼️</span>
+                                        <span style="font-size: 0.625rem; line-height: 1.1;">Sua Logo</span>
+                                    </div>
+                                    <input type="file" id="logoUpload" accept="image/*" class="hidden">
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Ícone de sopa com vapor -->
+                        <div class="steam" style="position: absolute; bottom: 0.5rem; right: 1.5rem; font-size: 3rem; color: rgba(255,255,255,0.4);">
+                            🍲
+                        </div>
+                    </div>
+
+                    <!-- Corpo do ingresso -->
+                    <div class="ticket-main-wrapper">
+                        <div id="ticketBody" style="padding: 1.5rem; background: linear-gradient(to bottom, white, rgba(255, 152, 0, 0.05)); flex: 1;">
+                            <!-- Número e Lote -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px dashed #FFB74D;">
+                                <div>
+                                    <p style="font-size: 0.75rem; color: var(--brown-light); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Nº do Ingresso</p>
+                                    <p contenteditable="true" style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">#001</p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <p style="font-size: 0.75rem; color: var(--brown-light); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Lote</p>
+                                    <p contenteditable="true" style="font-size: 1.25rem; font-weight: 700; color: var(--brown);">1º Lote</p>
+                                </div>
+                            </div>
+
+                            <!-- Informações do participante -->
+                            <div style="margin-bottom: 1.5rem;">
+                                <div style="background: linear-gradient(to right, #FFE0B2, #FFECB3); border-radius: 0.75rem; padding: 1rem; border-left: 4px solid var(--primary);">
+                                    <p style="font-size: 0.75rem; color: var(--brown-light); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.25rem;">
+                                        <span class="icon icon-user"></span> Nome do Participante
+                                    </p>
+                                    <p contenteditable="true" style="font-size: 1.125rem; font-weight: 700; color: var(--brown);">
+                                        João da Silva
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Detalhes do evento -->
+                            <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                                <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                                    <div style="background: var(--primary); color: white; border-radius: 0.5rem; padding: 0.5rem; width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <span class="icon icon-calendar"></span>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <p style="font-size: 0.75rem; color: var(--brown-light); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Data</p>
+                                        <p contenteditable="true" style="color: var(--brown); font-weight: 600;">Sábado, 25 de Outubro de 2025</p>
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                                    <div style="background: var(--primary); color: white; border-radius: 0.5rem; padding: 0.5rem; width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <span class="icon icon-clock"></span>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <p style="font-size: 0.75rem; color: var(--brown-light); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Horário</p>
+                                        <p contenteditable="true" style="color: var(--brown); font-weight: 600;">A partir das 19h00</p>
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                                    <div style="background: var(--primary); color: white; border-radius: 0.5rem; padding: 0.5rem; width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <span class="icon icon-location"></span>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <p style="font-size: 0.75rem; color: var(--brown-light); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Local</p>
+                                        <p contenteditable="true" style="color: var(--brown); font-weight: 600;">Salão Paroquial - Rua das Flores, 123 - Centro</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Valor -->
+                            <div style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: 1rem; padding: 1.25rem; text-align: center; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); margin-bottom: 1.5rem;">
+                                <p style="color: rgba(255,255,255,0.8); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.25rem;">Valor do Ingresso</p>
+                                <p contenteditable="true" style="color: white; font-size: 2.25rem; font-weight: 700;">R$ 35,00</p>
+                                <p style="color: rgba(255,255,255,0.7); font-size: 0.75rem; margin-top: 0.5rem;">Buffet livre de caldos + música ao vivo</p>
+                            </div>
+
+                            <!-- Informações adicionais -->
+                            <div style="background: #FFF8E1; border-radius: 0.75rem; padding: 1rem; border: 1px solid rgba(255, 183, 77, 0.3); margin-bottom: 1rem;">
+                                <p style="font-size: 0.75rem; color: var(--brown-light); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <span class="icon icon-info"></span>
+                                    Informações Adicionais
+                                </p>
+                                <p contenteditable="true" style="font-size: 0.875rem; color: var(--brown); line-height: 1.6;">
+                                    Traga sua caneca ou tigela para ajudar o meio ambiente! Crianças até 8 anos não pagam. Bebidas à parte.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Área de picote -->
+                        <div class="dashed-cut"></div>
+                        <div style="position: relative; background: linear-gradient(to bottom, rgba(255, 152, 0, 0.05), white); padding: 1.5rem;">
+                            <div style="position: absolute; top: -0.75rem; left: 50%; transform: translateX(-50%); background: white; padding: 0.25rem 1rem; border-radius: 9999px; border: 2px dashed var(--brown-light);">
+                                <p style="font-size: 0.75rem; color: var(--brown-light); font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                                    <span class="icon icon-scissors"></span>
+                                    <span contenteditable="true">Destaque aqui</span>
+                                </p>
+                            </div>
+                            
+                            <div style="text-align: center; padding-top: 0.5rem;">
+                                <p style="font-size: 0.75rem; color: var(--brown-light); margin-bottom: 0.5rem;">Controle de Entrada</p>
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; color: var(--brown);">
+                                    <div style="text-align: center;">
+                                        <p contenteditable="true" style="font-weight: 700; font-size: 1.125rem;">#001</p>
+                                        <p style="font-size: 0.625rem; color: var(--brown-light);">Número</p>
+                                    </div>
+                                    <div style="width: 1px; height: 2rem; background: rgba(141, 110, 99, 0.3);"></div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 1.5rem; color: var(--primary);" class="icon icon-bowl"></div>
+                                        <p contenteditable="true" style="font-size: 0.625rem; color: var(--brown-light);">1º Lote</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rodapé -->
+                        <div style="background: var(--brown); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+                            <p contenteditable="true" style="color: rgba(255,255,255,0.9); font-size: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="icon icon-recycle"></span>
+                                Não jogue fora - recicle | Juntos aquecemos corações
+                            </p>
+                            <span class="icon icon-heart" style="color: rgba(255,255,255,0.3);"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção de dicas de impressão -->
+    <div class="tips-panel no-print">
+        <h3 style="font-size: 1.125rem; font-weight: 700; color: var(--brown); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span class="icon icon-lightbulb" style="color: var(--primary);"></span>
+            Dicas para Impressão Offline
+        </h3>
+        <div class="tips-grid">
+            <div style="display: flex; gap: 0.75rem;">
+                <span class="icon icon-paper" style="color: var(--primary); margin-top: 0.25rem;"></span>
+                <div>
+                    <strong style="color: var(--brown);">Papel:</strong> Use papel couché 180g ou superior para melhor acabamento
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+                <span class="icon icon-ruler" style="color: var(--primary); margin-top: 0.25rem;"></span>
+                <div>
+                    <strong style="color: var(--brown);">Formatos:</strong> 10x15cm ou 20x7cm - clique em "Alternar Formato"
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+                <span class="icon icon-print" style="color: var(--primary); margin-top: 0.25rem;"></span>
+                <div>
+                    <strong style="color: var(--brown);">PDF:</strong> Clique "Imprimir" → Destino: "Salvar como PDF" → Salvar
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Estado global - 100% offline
+    let currentFormat = '10x15';
+    const ticket = document.getElementById('ticket');
+    const formatBtn = document.getElementById('formatToggle');
+    const formatText = document.getElementById('formatText');
+    
+    // Toast de feedback
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        const toastContent = document.getElementById('toastContent');
+        const toastMsg = document.getElementById('toastMessage');
+        toastMsg.textContent = message;
+        toastContent.style.background = isError ? '#dc2626' : '#16a34a';
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+    
+    // Alternar formato do ingresso
+    formatBtn.addEventListener('click', () => {
+        if (currentFormat === '10x15') {
+            ticket.classList.remove('format-10x15');
+            ticket.classList.add('format-20x7');
+            currentFormat = '20x7';
+            formatText.textContent = 'Formato 10x15cm';
+            showToast('Formato alterado para 20x7cm paisagem');
+        } else {
+            ticket.classList.remove('format-20x7');
+            ticket.classList.add('format-10x15');
+            currentFormat = '10x15';
+            formatText.textContent = 'Formato 20x7cm';
+            showToast('Formato alterado para 10x15cm retrato');
+        }
+    });
+
+    // Upload de logo - FileReader API nativa
+    document.getElementById('logoUpload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                showToast('Por favor, selecione uma imagem válida', true);
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('logoPreview').innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 0.5rem;" alt="Logo">`;
+                showToast('Logo carregada com sucesso!');
+            };
+            reader.onerror = function() {
+                showToast('Erro ao carregar a imagem', true);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Prepara elemento para captura removendo estilos de edição
+    function prepareForExport() {
+        const editables = ticket.querySelectorAll('[contenteditable="true"]');
+        editables.forEach(el => {
+            el.setAttribute('data-prev-outline', el.style.outline);
+            el.style.outline = 'none';
+            if (el.textContent.trim() === '') el.textContent = ' ';
+        });
+        return editables;
+    }
+
+    function restoreAfterExport(editables) {
+        editables.forEach(el => {
+            el.style.outline = el.getAttribute('data-prev-outline') || '';
+            el.removeAttribute('data-prev-outline');
+        });
+    }
+
+    // Botão Imprimir - window.print() nativo, 100% offline
+    document.getElementById('printBtn').addEventListener('click', () => {
+        const editables = prepareForExport();
+        showToast('Abra a janela de impressão. Destino: "Salvar como PDF"');
+        setTimeout(() => {
+            window.print();
+            restoreAfterExport(editables);
+        }, 100);
+    });
+
+    // Download como Imagem usando Canvas API nativa
+    document.getElementById('downloadImage').addEventListener('click', async () => {
+        const btn = document.getElementById('downloadImage');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<span>⏳</span><span>Gerando...</span>';
+        btn.disabled = true;
+
+        try {
+            const editables = prepareForExport();
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Método 1: Usa SVG + foreignObject para renderizar HTML no Canvas
+            const data = new XMLSerializer().serializeToString(ticket);
+            const svgBlob = new Blob([`
+                <svg xmlns="http://www.w3.org/2000/svg" width="${ticket.offsetWidth}" height="${ticket.offsetHeight}">
+                    <foreignObject width="100%" height="100%">
+                        <div xmlns="http://www.w3.org/1999/xhtml">
+                            ${data}
+                        </div>
+                    </foreignObject>
+                </svg>
+            `], { type: 'image/svg+xml;charset=utf-8' });
+            
+            const url = URL.createObjectURL(svgBlob);
+            const img = new Image();
+            
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const scale = 4; // Alta resolução para impressão
+                canvas.width = ticket.offsetWidth * scale;
+                canvas.height = ticket.offsetHeight * scale;
+                const ctx = canvas.getContext('2d');
+                ctx.scale(scale, scale);
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                
+                canvas.toBlob(function(blob) {
+                    const link = document.createElement('a');
+                    link.download = `ingresso-noite-dos-caldos-${currentFormat}-${Date.now()}.png`;
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    restoreAfterExport(editables);
+                    showToast('Imagem PNG baixada com sucesso!');
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }, 'image/png');
+            };
+            
+            img.onerror = function() {
+                URL.revokeObjectURL(url);
+                restoreAfterExport(editables);
+                showToast('Use "Imprimir / Salvar PDF" como alternativa', true);
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            };
+            
+            img.src = url;
+            
+        } catch (error) {
+            console.error('Erro ao gerar imagem:', error);
+            showToast('Use "Imprimir / Salvar PDF" - funciona 100% offline', true);
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }
+    });
+
+    // Prevenir quebra de linha em campos de linha única
+    document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                const isMultiline = el.closest('#ticketBody') && window.getComputedStyle(el).lineHeight !== 'normal';
+                if (!isMultiline && !el.parentElement.textContent.includes('Informações')) {
+                    e.preventDefault();
+                    el.blur();
+                }
+            }
+        });
+
+        el.addEventListener('blur', () => {
+            if (el.textContent.trim() === '') {
+                el.textContent = ' ';
+            }
+        });
+        
+        el.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
+    });
+
+    // Verificação de carregamento
+    window.addEventListener('load', () => {
+        console.log('✅ Sistema 100% offline carregado. Nenhuma dependência externa.');
+        console.log('📄 Para gerar PDF: Ctrl+P ou Cmd+P → Salvar como PDF');
+    });
+</script>
+</body>
+</html>
