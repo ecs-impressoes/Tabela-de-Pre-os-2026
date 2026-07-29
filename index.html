@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -345,6 +346,14 @@
                         </div>
 
                         <div class="calculator-input-group">
+                          
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" id="opt-frenteverso" value="fv"> <i class="fas fa-exchange-alt"></i> Frente e Verso</label>
+                            </div>
+                            <small style="color: var(--gray);">A opção "Frente e Verso" reduz R$ 0,25 por folha, até os valores mínimos de R$ 0,50 (preta) e R$ 0,65 (colorida).</small>
+                        </div>
+                        
+                        <div class="calculator-input-group">
                             <label for="calc-folhas-range"><i class="fas fa-file-alt"></i> Número de Folhas <span class="range-value" id="folhas-value">30</span></label>
                             <input type="range" id="calc-folhas-range" min="10" max="400" value="30" step="1">
                         </div>
@@ -613,39 +622,26 @@
             });
         });
 
-        // ========== LÓGICA DA CALCULADORA (SEM O DESCONTO DA OPÇÃO FRENTE E VERSO) ==========
-        function calcularPrecoPorFolhaCustom(tipo, folhas) {
-            let precoBase;
-            if (tipo === 'preta-frente') {
-                if (folhas <= 50) precoBase = 0.60;
-                else if (folhas <= 200) precoBase = 0.55;
-                else precoBase = 0.50;
-            } else if (tipo === 'preta-fv') {
-                if (folhas <= 50) precoBase = 0.50;
-                else if (folhas <= 200) precoBase = 0.45;
-                else precoBase = 0.40;
-            } else if (tipo === 'colorida-frente') {
-                if (folhas <= 50) precoBase = 0.95;
-                else if (folhas <= 200) precoBase = 0.85;
-                else precoBase = 0.75;
-            } else if (tipo === 'colorida-fv') {
-                if (folhas <= 50) precoBase = 0.80;
-                else if (folhas <= 200) precoBase = 0.75;
-                else precoBase = 0.70;
-            } else {
-                precoBase = 0.60;
-            }
+        // ========== LÓGICA DA CALCULADORA COM DESCONTO (APENAS FRENTE E VERSO) ==========
+        function calcularPrecoPorFolhaComDesconto(tipo, numOpcoes) {
+            let basePreto = 0.75;
+            let baseColorido = 0.90;
+            let precoBase = tipo.includes('preta') ? basePreto : baseColorido;
+            // Aplica aumento diário antes do desconto (regra oculta)
             precoBase = aplicarAumentoDiario(tipo, precoBase);
-            return precoBase;
+            const desconto = 0.25;
+            let precoFinal = precoBase - (numOpcoes * desconto);
+            const piso = tipo.includes('preta') ? 0.50 : 0.65;
+            return Math.max(precoFinal, piso);
         }
 
-        function calcularApostilaCustom(tipo, folhas, quantidade) {
-            const precoPorFolha = calcularPrecoPorFolhaCustom(tipo, folhas);
+        function calcularApostilaCustom(tipo, folhas, quantidade, numOpcoes) {
+            const precoPorFolha = calcularPrecoPorFolhaComDesconto(tipo, numOpcoes);
             const precoImpressao = precoPorFolha * folhas;
             const encadernacao = 7.00;
             const precoUnitario = precoImpressao + encadernacao;
             const precoTotal = precoUnitario * quantidade;
-            return { precoPorFolha, precoImpressao, precoUnitario, precoTotal, encadernacao, folhas, tipo, quantidade };
+            return { precoPorFolha, precoImpressao, precoUnitario, precoTotal, encadernacao, folhas, tipo, quantidade, numOpcoes };
         }
 
         // ========== VARIÁVEIS GLOBAIS ==========
@@ -700,7 +696,9 @@
             const tipo = document.getElementById('calc-tipo').value;
             const folhas = parseInt(document.getElementById('calc-folhas-range').value);
             const quantidade = parseInt(document.getElementById('calc-quantidade').value);
-            const calc = calcularApostilaCustom(tipo, folhas, quantidade);
+            const opFrente = document.getElementById('opt-frenteverso').checked;
+            let numOpcoes = opFrente ? 1 : 0;
+            const calc = calcularApostilaCustom(tipo, folhas, quantidade, numOpcoes);
             let tipoTexto = '';
             switch(tipo) {
                 case 'preta-frente': tipoTexto = 'Preta Só Frente'; break;
@@ -708,10 +706,11 @@
                 case 'colorida-frente': tipoTexto = 'Colorida Só Frente'; break;
                 case 'colorida-fv': tipoTexto = 'Colorida F/V'; break;
             }
+            const opcoesTexto = numOpcoes ? ' + Frente/Verso' : '';
             const novoItem = {
                 idUnico: `custom-${Date.now()}-${Math.random()}`,
                 tipoItem: 'custom',
-                nome: `${tipoTexto} - ${folhas} folhas`,
+                nome: `${tipoTexto} - ${folhas} folhas${opcoesTexto}`,
                 folhas: folhas,
                 quantidade: quantidade,
                 precoUnitario: calc.precoUnitario,
@@ -789,9 +788,11 @@
             const tipo = document.getElementById('calc-tipo').value;
             let folhas = parseInt(document.getElementById('calc-folhas-range').value);
             const quantidade = parseInt(document.getElementById('calc-quantidade').value);
+            const opFrente = document.getElementById('opt-frenteverso').checked;
+            let numOpcoes = opFrente ? 1 : 0;
             document.getElementById('calc-folhas-input').value = folhas;
             document.getElementById('folhas-value').textContent = folhas;
-            const resultado = calcularApostilaCustom(tipo, folhas, quantidade);
+            const resultado = calcularApostilaCustom(tipo, folhas, quantidade, numOpcoes);
             let tipoTexto = '';
             switch(tipo) {
                 case 'preta-frente': tipoTexto = 'Preta - Só Frente'; break;
@@ -800,7 +801,7 @@
                 case 'colorida-fv': tipoTexto = 'Colorida - Frente e Verso'; break;
             }
             document.getElementById('preco-calculado').textContent = `R$ ${resultado.precoTotal.toFixed(2)}`;
-            document.getElementById('detalhes-calculadora').textContent = `${quantidade} × ${folhas} folhas (${tipoTexto})`;
+            document.getElementById('detalhes-calculadora').textContent = `${quantidade} × ${folhas} folhas (${tipoTexto}) ${numOpcoes > 0 ? '+ Frente e Verso' : ''}`;
             document.getElementById('preco-por-folha').textContent = resultado.precoPorFolha.toFixed(2);
             document.getElementById('custo-impressao').textContent = `R$ ${resultado.precoImpressao.toFixed(2)}`;
             document.getElementById('quantidade-apostilas').textContent = quantidade;
@@ -826,6 +827,7 @@
             document.getElementById('calc-folhas-input').addEventListener('input', (e) => { let val = parseInt(e.target.value); if (val>=10 && val<=400) { document.getElementById('calc-folhas-range').value = val; atualizarCalculadoraUI(); } });
             document.getElementById('calc-tipo').addEventListener('change', atualizarCalculadoraUI);
             document.getElementById('calc-quantidade').addEventListener('input', atualizarCalculadoraUI);
+            document.getElementById('opt-frenteverso').addEventListener('change', atualizarCalculadoraUI);
             document.getElementById('btn-adicionar-calculadora').addEventListener('click', adicionarItemCalculadora);
             document.getElementById('cart-icon').addEventListener('click', abrirModal);
             document.getElementById('close-cart').addEventListener('click', fecharModal);
